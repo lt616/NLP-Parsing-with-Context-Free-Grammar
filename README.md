@@ -1,6 +1,6 @@
 # NLP-Parsing-with-Context-Free-Grammar
 Build a CNF(Context Free Grammar) parse machine using CKY(Cocke-Kasami-Younger) algorithm, which is a bottom up DP algorithm. 
-The basic interface and data are provided by prof. 
+The basic interface and data are provided by prof. Daniel Bauer.  
 
 # Dataset 
 The main data for this project has been extracted from the ATIS (Air Travel Information Services) subsection of the Penn Treebank. ATIS is originally a spoken language corpus containing user queries about air travel. These queries have been transcribed into text and annotated with Penn-Treebank phrase structure syntax.
