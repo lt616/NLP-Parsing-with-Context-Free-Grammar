@@ -96,16 +96,87 @@ class CkyParser(object):
         the sentence is in the language described by the grammar. Otherwise
         return False
         """
-        # TODO, part 2
-        return False 
+        # TODO, part 2 
+
+        n = len(tokens) 
+
+        cky_table = {} 
+        for i in range(0, n): 
+            cky_table[i] = {} 
+            for j in range(i + 1, n + 1): 
+                cky_table[i][j] = [] 
+                if i + 1 == j: 
+                    for A in self.grammar.rhs_to_rules[tuple([tokens[i]])]: 
+                        cky_table[i][j].append(A[0]) 
+                        # print(A[0]) 
+
+        # print(cky_table) 
+
+        for length in range(2, n + 1): 
+            for i in range(0, n - length + 1): 
+                j = i + length 
+                for k in range(i + 1, j): 
+                    # if not cky_table[i][k] or not cky_table[k][j]: 
+                    #     continue; 
+
+                    for B in cky_table[i][k]: 
+                        for C in cky_table[k][j]: 
+                            for A in self.grammar.rhs_to_rules[tuple([B, C])]:  
+                                cky_table[i][j].append(A[0])  
+                                # print(A[0] + "->" + B + " " + C)  
+
+
+        return not not cky_table[0][n]  
        
     def parse_with_backpointers(self, tokens):
         """
         Parse the input tokens and return a parse table and a probability table.
         """
-        # TODO, part 3
-        table= None
-        probs = None
+        # TODO, part 3 
+
+        n = len(tokens) 
+
+        table = {} 
+        probs = {} 
+
+        for i in range(0, n): 
+            for j in range(i + 1, n + 1): 
+                table[tuple([i, j])] = {}
+                if i + 1 == j: 
+                    for A in self.grammar.rhs_to_rules[tuple([tokens[i]])]: 
+                        table[tuple([i, j])][A[0]] = tokens[i]  
+
+        for i in range(0, n): 
+            for j in range(i + 1, n + 1): 
+                probs[tuple([i, j])] = {}
+                if i + 1 == j: 
+                    for A in self.grammar.rhs_to_rules[tuple([tokens[i]])]: 
+                        probs[tuple([i, j])][A[0]] = math.log(A[2])  
+                        print(math.log(A[2])) 
+
+        for length in range(2, n + 1): 
+            for i in range(0, n - length + 1): 
+                j = i + length 
+                for k in range(i + 1, j): 
+
+                    for B in table[tuple([i, k])]: 
+                        for C in table[tuple([k, j])]: 
+                            for A in self.grammar.rhs_to_rules[tuple([B, C])]:  
+                                table[tuple([i, j])][A[0]] = tuple([tuple([B, i, k]), tuple([C, k, j])]) 
+
+        for length in range(2, n + 1): 
+            for i in range(0, n - length + 1): 
+                j = i + length 
+                for k in range(i + 1, j): 
+
+                    for B in probs[tuple([i, k])]: 
+                        for C in probs[tuple([k, j])]: 
+                            for A in self.grammar.rhs_to_rules[tuple([B, C])]:  
+                                probs[tuple([i, j])][A[0]] = math.log(A[2]) + probs[tuple([i, k])][B] + probs[tuple([k, j])][C]  
+
+        print(check_table_format(table)) 
+        print(check_probs_format(probs)) 
+
         return table, probs
 
 
@@ -113,18 +184,31 @@ def get_tree(chart, i,j,nt):
     """
     Return the parse-tree rooted in non-terminal nt and covering span i,j.
     """
-    # TODO: Part 4
-    return None 
- 
+    # TODO: Part 4 
+
+    current = chart[tuple([i, j])][nt] 
+    if not isinstance(current, tuple):  
+        return tuple([nt, current]) 
+    else: 
+        B = current[0] 
+        C = current[1] 
+        # print(get_tree(chart, B[1], B[2], B[0])) 
+        # print(get_tree(chart, C[1], C[2], C[0])) 
+        return tuple([nt, get_tree(chart, B[1], B[2], B[0]), get_tree(chart, C[1], C[2], C[0])])
+
+
        
 if __name__ == "__main__":
     
     with open('atis3.pcfg','r') as grammar_file: 
         grammar = Pcfg(grammar_file) 
+        print(grammar.rhs_to_rules[('flights',)])  
         parser = CkyParser(grammar)
         toks =['flights', 'from','miami', 'to', 'cleveland','.'] 
-        #print(parser.is_in_language(toks))
-        #table,probs = parser.parse_with_backpointers(toks)
+        # toks =['miami', 'flights','cleveland', 'from', 'to','.'] 
+        print(parser.is_in_language(toks))
+        table,probs = parser.parse_with_backpointers(toks) 
+        print(get_tree(table, 0, len(toks), grammar.startsymbol)) 
         #assert check_table_format(chart)
         #assert check_probs_format(probs)
         
