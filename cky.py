@@ -139,20 +139,30 @@ class CkyParser(object):
         table = {} 
         probs = {} 
 
-        for i in range(0, n): 
-            for j in range(i + 1, n + 1): 
-                table[tuple([i, j])] = {}
-                if i + 1 == j: 
-                    for A in self.grammar.rhs_to_rules[tuple([tokens[i]])]: 
-                        table[tuple([i, j])][A[0]] = tokens[i]  
+        # for i in range(0, n): 
+        #     for j in range(i + 1, n + 1): 
+        #         table[tuple([i, j])] = {}
+        #         if i + 1 == j: 
+        #             for A in self.grammar.rhs_to_rules[tuple([tokens[i]])]: 
+        #                 if not table[tuple([i, j])][A[0]]: 
+        #                     table[tuple([i, j])][A[0]] = tokens[i] 
+        #                 else: 
+
 
         for i in range(0, n): 
             for j in range(i + 1, n + 1): 
+                table[tuple([i, j])] = {} 
                 probs[tuple([i, j])] = {}
                 if i + 1 == j: 
                     for A in self.grammar.rhs_to_rules[tuple([tokens[i]])]: 
-                        probs[tuple([i, j])][A[0]] = math.log(A[2])  
-                        print(math.log(A[2])) 
+                        if not A[0] in probs[tuple([i, j])]: 
+                            probs[tuple([i, j])][A[0]] = math.log(A[2]) 
+                            table[tuple([i, j])][A[0]] = tokens[i]
+                        elif math.log(A[2]) > probs[tuple([i, j])][A[0]]: 
+                            probs[tuple([i, j])][A[0]] = math.log(A[2]) 
+                            table[tuple([i, j])][A[0]] = tokens[i] 
+
+                        # print(math.log(A[2])) 
 
         for length in range(2, n + 1): 
             for i in range(0, n - length + 1): 
@@ -161,7 +171,8 @@ class CkyParser(object):
 
                     for B in table[tuple([i, k])]: 
                         for C in table[tuple([k, j])]: 
-                            for A in self.grammar.rhs_to_rules[tuple([B, C])]:  
+                            for A in self.grammar.rhs_to_rules[tuple([B, C])]: 
+
                                 table[tuple([i, j])][A[0]] = tuple([tuple([B, i, k]), tuple([C, k, j])]) 
 
         for length in range(2, n + 1): 
@@ -171,8 +182,15 @@ class CkyParser(object):
 
                     for B in probs[tuple([i, k])]: 
                         for C in probs[tuple([k, j])]: 
-                            for A in self.grammar.rhs_to_rules[tuple([B, C])]:  
-                                probs[tuple([i, j])][A[0]] = math.log(A[2]) + probs[tuple([i, k])][B] + probs[tuple([k, j])][C]  
+                            for A in self.grammar.rhs_to_rules[tuple([B, C])]: 
+                                if not A[0] in probs[tuple([i, j])]: 
+                                    probs[tuple([i, j])][A[0]] = math.log(A[2]) + probs[tuple([i, k])][B] + probs[tuple([k, j])][C] 
+                                    table[tuple([i, j])][A[0]] = tuple([tuple([B, i, k]), tuple([C, k, j])]) 
+                                else: 
+                                    prob = math.log(A[2]) + probs[tuple([i, k])][B] + probs[tuple([k, j])][C] 
+                                    if prob > probs[tuple([i, j])][A[0]]: 
+                                        probs[tuple([i, j])][A[0]] = math.log(A[2]) + probs[tuple([i, k])][B] + probs[tuple([k, j])][C] 
+                                        table[tuple([i, j])][A[0]] = tuple([tuple([B, i, k]), tuple([C, k, j])]) 
 
         print(check_table_format(table)) 
         print(check_probs_format(probs)) 
@@ -208,6 +226,7 @@ if __name__ == "__main__":
         # toks =['miami', 'flights','cleveland', 'from', 'to','.'] 
         print(parser.is_in_language(toks))
         table,probs = parser.parse_with_backpointers(toks) 
+        print(probs[(0,3)]['NP']) 
         print(get_tree(table, 0, len(toks), grammar.startsymbol)) 
         #assert check_table_format(chart)
         #assert check_probs_format(probs)
