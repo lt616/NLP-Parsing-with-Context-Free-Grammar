@@ -162,19 +162,6 @@ class CkyParser(object):
                             probs[tuple([i, j])][A[0]] = math.log(A[2]) 
                             table[tuple([i, j])][A[0]] = tokens[i] 
 
-                        # print(math.log(A[2])) 
-
-        for length in range(2, n + 1): 
-            for i in range(0, n - length + 1): 
-                j = i + length 
-                for k in range(i + 1, j): 
-
-                    for B in table[tuple([i, k])]: 
-                        for C in table[tuple([k, j])]: 
-                            for A in self.grammar.rhs_to_rules[tuple([B, C])]: 
-
-                                table[tuple([i, j])][A[0]] = tuple([tuple([B, i, k]), tuple([C, k, j])]) 
-
         for length in range(2, n + 1): 
             for i in range(0, n - length + 1): 
                 j = i + length 
